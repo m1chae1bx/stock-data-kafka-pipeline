@@ -8,7 +8,9 @@ The application is composed of five major components: a data extractor, a proces
 
 The model will initially be trained using historical stock data, and then it will be retrained every time new data is received.
 
-# Installation
+# Installation Requirements
+
+***Note: This project was developed to run on a Mac with M1 chip (ARM64 architecture). The instructions below are for this specific setup. If you are using a different architecture or operating system, you might need to make some changes to the instructions in this Readme file and possibly in the code as well. For example, you might need to change the base image in the Dockerfiles or Kubernetes configuration files to a different one that is compatible with your architecture. For Kakfa, I am using ARM64 images from the Confluent repository for both the Broker and the Zookeeper deployments.***
 
 To run this project, you will need the following:
 - `Minikube` - a tool that allows you to run a Kubernetes cluster on your local machine in a Docker container. You will not need to install Kubernetes, as Minikube will install it for you. 
