@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  creationTimestamp: null
+  name: stock-data-fetcher
+spec:
+  jobTemplate:
+    metadata:
+      creationTimestamp: null
+      name: stock-data-fetcher
+    spec:
+      template:
+        metadata:
+          creationTimestamp: null
+        spec:
+          containers:
+          - image: stock-data-fetcher:latest
+            imagePullPolicy: IfNotPresent
+            name: stock-data-fetcher
+            resources: {}
+            env:
+            - name: SERVER_ADDR
+              value: kafka-broker-service:29092
+            - name: TOPIC
+              value: stock-details
+          restartPolicy: OnFailure
+  schedule: 0 15 * * *
+status: {}

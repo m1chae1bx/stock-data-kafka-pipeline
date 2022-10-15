@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: stock-data-processor
+  name: stock-data-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stock-data-processor
+  template:
+    metadata:
+      labels:
+        app: stock-data-processor
+    spec:
+      containers:
+      - image: stock-data-processor:latest
+        imagePullPolicy: IfNotPresent
+        name: stock-data-processor
+        env:
+        - name: SERVER_ADDR
+          value: kafka-broker-service:29092
+        - name: TOPIC
+          value: stock-details
