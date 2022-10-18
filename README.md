@@ -74,11 +74,13 @@ Server: Docker Desktop 4.12.0 (85629)
 3. Verify that the Minikube cluster is running by running the following command `kubectl get nodes`.
 4. Deploy the Kafka zookeeper by running the following command `kubectl apply -f kubernetes/zookeeper.yaml`.
 5. Once the zookeeper is deployed, deploy the Kafka broker by running the following command `kubectl apply -f kubernetes/kafka-broker.yaml`.
-6. Build the container image for the Stock Data Fetcher Python application by running the following command `docker build -t stock-data-fetcher -f apps/stock-data-fetcher/Dockerfile .`.
-7. Load the container image into the Minikube cluster by running the following command `minikube image load stock-data-fetcher`.
-8. Deploy the Stock Data Fetcher application as a Kubernetes resource by running the following command `kubectl apply -f kubernetes/stock-data-fetcher.yaml`. This is a Kubernetes cronjob that will run at a regular interval as defined in the cron expression to fetch the stock data for the predefined stocks.
-9. Build the container image for the Stock Data Processor Python application by running the following command `docker build -t stock-data-processor -f apps/stock-data-processor/Dockerfile .`.
-10. Deploy the Stock Data Processor application by running the following command `kubectl apply -f kubernetes/stock-data-processor.yaml`. 
+6. Build the container image for the Stock Data Processor Python application by running the following command `docker build -t stock-data-processor -f apps/stock-data-processor/Dockerfile .`.
+9. Load the container image into the Minikube cluster by running the following command `minikube image load stock-data-processor`.
+7. Deploy the Stock Data Processor application by running the following command `kubectl apply -f kubernetes/stock-data-processor.yaml`. 
+8. Build the container image for the Stock Data Fetcher Python application by running the following command `docker build -t stock-data-fetcher -f apps/stock-data-fetcher/Dockerfile .`.
+9. Load the container image into the Minikube cluster by running the following command `minikube image load stock-data-fetcher`.
+10. Deploy the Stock Data Fetcher application as a Kubernetes resource by running the following command `kubectl apply -f kubernetes/stock-data-fetcher.yaml`. This is a Kubernetes cronjob that will run at a regular interval as defined in the cron expression to fetch the stock data for the predefined stocks. 
+11. To run the cronjob immediately, you can run the following command `kubectl create job --from=cronjob/stock-data-fetcher <job name>`.
 
 # Monitoring and Logging
 
@@ -103,7 +105,7 @@ service/zookeeper-service      NodePort    10.108.208.103   <none>        2181:3
 
 To view realtime updates to Kubernetes resources of a particular type, run the following command `kubectl get <resource-type> -w`. For example, to view realtime updates to the pods in the cluster, run the following command `kubectl get pods -w`. 
 
-## View Logs of Kubernetes Pods
+## View Logs of Kubernetes Resources
 
 To view the logs of a Kubernetes pod, run the following command `kubectl logs <pod-name>`. For example, 
 
@@ -112,14 +114,10 @@ To view the logs of a Kubernetes pod, run the following command `kubectl logs <p
 Topic: stock-details
 Server: kafka-broker-service:29092
 Listening for stock updates ...
-
-Received a message
-{"stock": [{"name": "Ayala Land", "price": {"currency": "PHP", "amount": 23.5}, "percent_change": 3.07, "volume": 13724300, "symbol": "ALI"}], "as_of": "2022-10-14T14:50:00+08:00"}
-
-Received a message
-{"stock": [{"name": "Banco de Oro", "price": {"currency": "PHP", "amount": 120.0}, "percent_change": 1.69, "volume": 3594990, "symbol": "BDO"}], "as_of": "2022-10-14T14:50:00+08:00"}
 ...
 ```
+
+To view the logs of a Kubernetes job, run the following command `kubectl logs job/<job-name>`.
 
 # Development and Testing
 
