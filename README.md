@@ -76,7 +76,7 @@ Server: Docker Desktop 4.12.0 (85629)
 5. Once the zookeeper is deployed, deploy the Kafka broker by running the following command `kubectl apply -f kubernetes/kafka-broker.yaml`.
 6. Build the container image for the Stock Data Fetcher Python application by running the following command `docker build -t stock-data-fetcher -f apps/stock-data-fetcher/Dockerfile .`.
 7. Load the container image into the Minikube cluster by running the following command `minikube image load stock-data-fetcher`.
-8. Deploy application as a Kubernetes by running the following command `kubectl apply -f kubernetes/stock-data-fetcher.yaml`. This is a Kubernetes cronjob that will run at a regular interval as defined in the cron expression to fetch the stock data for the predefined stocks.
+8. Deploy the Stock Data Fetcher application as a Kubernetes resource by running the following command `kubectl apply -f kubernetes/stock-data-fetcher.yaml`. This is a Kubernetes cronjob that will run at a regular interval as defined in the cron expression to fetch the stock data for the predefined stocks.
 9. Build the container image for the Stock Data Processor Python application by running the following command `docker build -t stock-data-processor -f apps/stock-data-processor/Dockerfile .`.
 10. Deploy the Stock Data Processor application by running the following command `kubectl apply -f kubernetes/stock-data-processor.yaml`. 
 
