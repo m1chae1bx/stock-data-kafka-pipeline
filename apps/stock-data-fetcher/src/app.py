@@ -12,13 +12,14 @@ TOPIC = os.environ.get("TOPIC")
 SERVER_ADDR = os.environ.get("SERVER_ADDR")
 
 print("Topic:", TOPIC)
-print("Server:", SERVER_ADDR)
+print("Server:", SERVER_ADDR, "\n")
 print("Connecting to Kafka...")
 
 try:
     producer = KafkaProducer(
         bootstrap_servers=SERVER_ADDR, api_version=(7, 1, 3)
     )
+    print("Connected to Kafka\n")
 except Exception:
     print("Error connecting to Kafka")
     raise
@@ -27,12 +28,14 @@ stocks = ["JFC", "ALI", "BDO", "BPI", "GLO", "MER", "SM", "TEL", "URC"]
 
 for stock in stocks:
     try:
+        print("Fetching data for", stock, "...")
         stock_data = scrape_stock_data(stock)
         producer.send(TOPIC, json.dumps(stock_data).encode("utf-8"))
-        print(f"Done sending {stock}")
+        print(stock_data)
+        print("Done sending", stock, "\n")
     except RuntimeError as exc:
-        print(f"Error fetching stock data for {stock}", exc)
+        print(exc)
 
 producer.flush()
-print(f"Done sending all stocks for {date.today()}")
+print("Done sending all stocks for", date.today())
 producer.close()
