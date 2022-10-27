@@ -4,7 +4,7 @@ import json
 import os
 from datetime import date
 
-from kafka import KafkaProducer
+from kafka3 import KafkaProducer
 
 from scraper import scrape_stock_data
 
@@ -17,7 +17,9 @@ print("Connecting to Kafka...")
 
 try:
     producer = KafkaProducer(
-        bootstrap_servers=SERVER_ADDR, api_version=(7, 1, 3)
+        bootstrap_servers=SERVER_ADDR,
+        api_version=(7, 1, 3)
+        # value_serializer=lambda v: json.dumps(v).encode('utf-8'))
     )
     print("Connected to Kafka\n")
 except Exception:
@@ -37,5 +39,5 @@ for stock in stocks:
         print(exc)
 
 producer.flush()
-print("Done sending all stocks for", date.today())
 producer.close()
+print("Done sending all stocks for", date.today())
