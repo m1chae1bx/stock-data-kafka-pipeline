@@ -1,126 +1,36 @@
 """Provides functions to scrape stock data from PSE website."""
 
-import locale
+import logging
 
 import requests
 from bs4 import BeautifulSoup
+from requests import HTTPError, JSONDecodeError
+from src.custom_types import StockData, StockDataFetchingError
 
-from model import StockData
-
-
-def get_close(soup: BeautifulSoup) -> float | str:
-    """Get close price of stock from soup object"""
-    try:
-        close_price_th = soup.find("th", text="Last Traded Price")
-        if close_price_th is None:
-            raise RuntimeError("Element th not found")
-
-        close_price_td = close_price_th.find_next_sibling("td")
-        if close_price_td is None:
-            raise RuntimeError("Sibling element td not found")
-
-        close_price_text = close_price_td.text.strip()
-        if close_price_text == "":
-            return "N/A"
-
-        close_price = float(locale.atof(close_price_text))
-
-        return close_price
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError("Error parsing closing price") from exc
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
-def get_open(soup: BeautifulSoup) -> float | str:
-    """Get open price of stock from soup object"""
-    try:
-        open_price_th = soup.find("th", text="Open")
-        if open_price_th is None:
-            raise RuntimeError("Element th not found")
+def get_stock_data_point(soup: BeautifulSoup, label: str) -> str:
+    """
+    Get stock data point from soup object with the following format:
+    <th>label</th><td>value</td>
+    """
+    th_element = soup.find("th", string=label)
+    if th_element is None:
+        logging.error("Label %s not found", label)
+        raise StockDataFetchingError()
 
-        open_price_td = open_price_th.find_next_sibling("td")
-        if open_price_td is None:
-            raise RuntimeError("Sibling element td not found")
+    td_element = th_element.find_next_sibling("td")
+    if td_element is None:
+        logging.error("Value for label %s not found", label)
+        raise StockDataFetchingError()
 
-        open_price_text = open_price_td.text.strip()
-        if open_price_text == "":
-            return "N/A"
+    value = td_element.text.strip()
 
-        open_price = float(locale.atof(open_price_text))
-
-        return open_price
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError("Error parsing opening price") from exc
-
-
-def get_high(soup: BeautifulSoup) -> float | str:
-    """Get high price of stock from soup object"""
-    try:
-        high_price_th = soup.find("th", text="High")
-        if high_price_th is None:
-            raise RuntimeError("Element th not found")
-
-        high_price_td = high_price_th.find_next_sibling("td")
-        if high_price_td is None:
-            raise RuntimeError("Sibling element td not found")
-
-        high_price_text = high_price_td.text.strip()
-        if high_price_text == "":
-            return "N/A"
-
-        high_price = float(locale.atof(high_price_text))
-
-        return high_price
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError("Error parsing highest price") from exc
-
-
-def get_low(soup: BeautifulSoup) -> float | str:
-    """Get low price of stock from soup object"""
-    try:
-        low_price_th = soup.find("th", text="Low")
-        if low_price_th is None:
-            raise RuntimeError("Element th not found")
-
-        low_price_td = low_price_th.find_next_sibling("td")
-        if low_price_td is None:
-            raise RuntimeError("Sibling element td not found")
-
-        low_price_text = low_price_td.text.strip()
-        if low_price_text == "":
-            return "N/A"
-
-        low_price = float(locale.atof(low_price_text))
-
-        return low_price
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError("Error parsing lowest price") from exc
-
-
-def get_volume(soup: BeautifulSoup) -> int | str:
-    """Get volume of stock from soup object"""
-    try:
-        volume_th = soup.find("th", text="Volume")
-        if volume_th is None:
-            raise RuntimeError("Element th not found")
-
-        volume_td = volume_th.find_next_sibling("td")
-        if volume_td is None:
-            raise RuntimeError("Sibling element td not found")
-
-        volume_text = volume_td.text.strip()
-        if volume_text == "":
-            return "N/A"
-
-        volume = int(locale.atoi(volume_text))
-
-        return volume
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError("Error parsing volume") from exc
+    return value
 
 
 def fetch_company_id(stock_symbol: str) -> int:
@@ -135,47 +45,42 @@ def fetch_company_id(stock_symbol: str) -> int:
         company_id = int(response.json()[0]["cmpyId"])
 
         return company_id
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError(
-            f"Error fetching company ID from stock symbol {stock_symbol}"
-        ) from exc
+    except (HTTPError, JSONDecodeError) as exc:
+        logging.exception("Error fetching company ID of %s", stock_symbol)
+        raise StockDataFetchingError(f"Error fetching company ID of {stock_symbol}") from exc
 
 
 def fetch_stock_data_soup(company_id: int) -> BeautifulSoup:
     """Fetch stock data from PSE website"""
-    stock_data_url = (
-        f"https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={company_id}"
-    )
+    stock_data_url = f"https://edge.pse.com.ph/companyPage/stockData.do?cmpy_id={company_id}"
     try:
         response = requests.get(stock_data_url, timeout=10)
         response.raise_for_status()
 
         return BeautifulSoup(response.text, "html.parser")
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError(f"Request to {stock_data_url} failed") from exc
+    except HTTPError as exc:
+        logging.exception("Error fetching stock data of company ID %s", company_id)
+        raise StockDataFetchingError(
+            f"Error fetching stock data of company ID {company_id}"
+        ) from exc
 
 
 def scrape_stock_data(stock_symbol: str) -> StockData:
     """Scrape stock data from PSE website"""
-    locale.setlocale(locale.LC_ALL, "en_US.UTF-8")
-
+    logging.debug("Scraping stock data for %s...", stock_symbol)
     try:
         company_id = fetch_company_id(stock_symbol)
         soup = fetch_stock_data_soup(company_id)
         stock_data: StockData = {
             "stock": stock_symbol,
-            "close": get_close(soup),
-            "open": get_open(soup),
-            "high": get_high(soup),
-            "low": get_low(soup),
-            "volume": get_volume(soup),
+            "close": get_stock_data_point(soup, "Last Traded Price"),
+            "open": get_stock_data_point(soup, "Open"),
+            "high": get_stock_data_point(soup, "High"),
+            "low": get_stock_data_point(soup, "Low"),
+            "volume": get_stock_data_point(soup, "Volume"),
         }
 
         return stock_data
-    except Exception as exc:
-        print(exc)
-        raise RuntimeError(
-            f"Error scraping stock data for {stock_symbol}"
-        ) from exc
+    except StockDataFetchingError as exc:
+        logging.exception("Error scraping stock data of %s", stock_symbol)
+        raise exc

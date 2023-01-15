@@ -1,43 +1,79 @@
 """Fetches stock data from PSE website and sends it to the given Kafka topic"""
 
 import json
+import logging
 import os
+import sys
 from datetime import date
 
 from kafka3 import KafkaProducer
+from kafka3.errors import KafkaTimeoutError
+from src.config import STOCK_CODES
+from src.custom_types import StockDataFetchingError
+from src.scraper import scrape_stock_data
 
-from scraper import scrape_stock_data
+logging.basicConfig(level=logging.INFO)
 
-TOPIC = os.environ.get("TOPIC")
-SERVER_ADDR = os.environ.get("SERVER_ADDR")
 
-print("Topic:", TOPIC)
-print("Server:", SERVER_ADDR, "\n")
-print("Connecting to Kafka...")
-
-try:
-    producer = KafkaProducer(
-        bootstrap_servers=SERVER_ADDR,
-        api_version=(7, 1, 3)
-        # value_serializer=lambda v: json.dumps(v).encode('utf-8'))
-    )
-    print("Connected to Kafka\n")
-except Exception:
-    print("Error connecting to Kafka")
-    raise
-
-stocks = ["JFC", "ALI", "BDO", "BPI", "GLO", "MER", "SM", "TEL", "URC"]
-
-for stock in stocks:
+def create_producer(server_addr: str) -> KafkaProducer:
+    """Create Kafka producer client"""
     try:
-        print("Fetching data for", stock, "...")
-        stock_data = scrape_stock_data(stock)
-        producer.send(TOPIC, json.dumps(stock_data).encode("utf-8"))
-        print(stock_data)
-        print("Done sending", stock, "\n")
-    except RuntimeError as exc:
-        print(exc)
+        logging.info("Connecting to Kafka server at %s ...", server_addr)
+        producer = KafkaProducer(
+            bootstrap_servers=server_addr,
+            api_version=(7, 1, 3),
+        )
+        logging.info("Connected to Kafka server")
+        return producer
+    except Exception as exc:
+        logging.warning("Error connecting to Kafka server at %s", server_addr)
+        raise ConnectionError("Error connecting to Kafka server") from exc
 
-producer.flush()
-producer.close()
-print("Done sending all stocks for", date.today())
+
+def main():
+    """Main function"""
+    topic = os.environ.get("TOPIC")
+    if topic is None:
+        logging.critical("Required TOPIC environment variable not set")
+        sys.exit(1)
+
+    server_addr = os.environ.get("SERVER_ADDR")
+    if server_addr is None:
+        logging.critical("Required SERVER_ADDR environment variable not set")
+        sys.exit(1)
+
+    try:
+        producer = create_producer(server_addr)
+    except ConnectionError:
+        logging.critical("Unable to continue without Kafka producer")
+        sys.exit(1)
+
+    logging.info("Sending stock data for %s ...", date.today())
+
+    for stock in STOCK_CODES:
+        stock_data = None
+        try:
+            logging.info("Fetching stock data for %s ...", stock)
+            stock_data = scrape_stock_data(stock)
+            logging.info("Stock data fetched: %s", stock_data)
+        except StockDataFetchingError:
+            logging.error("Error fetching stock data for %s", stock)
+            continue
+
+        try:
+            logging.info("Sending stock data for %s ...", stock)
+            producer.send(topic, json.dumps(stock_data).encode("utf-8"))
+            logging.info("Sent stock data for %s", stock)
+        except KafkaTimeoutError:
+            logging.error("Error sending stock data for %s", stock)
+            continue
+
+    try:
+        producer.flush()
+    except KafkaTimeoutError:
+        logging.exception("Failed to flush buffered records within timeout")
+    finally:
+        producer.close()
+        logging.info("Connection to Kafka server closed")
+
+    logging.info("Done sending all stock data")

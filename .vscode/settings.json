@@ -5,17 +5,13 @@
     "reportUnknownMemberType": "none"
   },
   "editor.rulers": [
-    80
+    100
   ],
   "editor.formatOnSave": true,
   "python.formatting.provider": "black",
   "python.formatting.blackArgs": [
     "--line-length",
-    "80"
-  ],
-  "python.sortImports.args": [
-    "--profile",
-    "black"
+    "100"
   ],
   "[python]": {
     "editor.codeActionsOnSave": {
@@ -23,4 +19,13 @@
     }
   },
   "python.linting.pylintEnabled": true,
+  "python.testing.pytestArgs": [
+    "apps"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "isort.args": [
+    "--profile",
+    "black"
+  ],
 }
