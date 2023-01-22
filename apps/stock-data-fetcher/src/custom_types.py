@@ -12,3 +12,7 @@ class StockData(TypedDict):
     high: float | str
     low: float | str
     volume: int | str
+
+
+class StockDataFetchingError(Exception):
+    """Custom exception class for stock data fetching error"""
