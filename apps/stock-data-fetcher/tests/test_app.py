@@ -6,7 +6,7 @@ from unittest.mock import Mock, call, patch
 from kafka3 import KafkaProducer
 from kafka3.errors import KafkaTimeoutError
 from src.app import create_producer, main
-from src.types import StockDataFetchingError
+from src.custom_types import StockDataFetchingError
 
 mock_stock_codes = ["XYZ"]
 

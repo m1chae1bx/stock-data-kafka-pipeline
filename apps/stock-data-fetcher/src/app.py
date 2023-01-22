@@ -12,7 +12,10 @@ from src.config import STOCK_CODES
 from src.custom_types import StockDataFetchingError
 from src.scraper import scrape_stock_data
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 
 def create_producer(server_addr: str) -> KafkaProducer:

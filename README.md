@@ -138,4 +138,4 @@ To test locally, follow the instructions below:
 6. Activate the virtual environment created in step 2.
 7. Run `pip install -r requirements.txt` in the application directory to install the dependencies.
 8. Set the environment variables required by the application as stated in the `local.env` file, if any. To set the environment variables, run the following command `source local.env`.
-9. Run the application by running the following command `python app.py`.
+9. Run the application by running the following command `python __main__.py`.
