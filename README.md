@@ -1,12 +1,8 @@
-This is a project aimed to demonstrate the basics of Kubernetes, Apache Kafka and Python. The goal is to build a simple application that predicts the price of some stocks using a machine learning model. What you will see here is a very simplified setup — not what is usually implemented in production but a great way to understand the basics.
-
-***Disclaimer: This project is still in active development, and several components such as the machine learning model and the model trainer are not yet implemented. Currently, the stock data processor will only print the received messages onto standard output.***
+This is a project aimed to demonstrate the basics of Kubernetes, Apache Kafka and Python. The goal is to build a simple application that fetches stock information from the Internet and then sends it to Kafka cluster to be processed a Kafka consumer. What you will see here is a very simplified setup — not what is usually implemented in production but a great way to understand the basics.
 
 # Architecture
 
-The application is composed of five major components: a data extractor, a processor, a machine learning model, a model trainer, and a prediction service. The data extractor (stock-data-fetcher) fetches the current stock data and sends it to Kafka which acts as a message broker. Then, the processor (stock-data-processor) receives the data, processes it to extract relevant features, and sends those features back to Kafka. The model trainer uses these features to update or retrain the model. Finally, the prediction service uses the model to predict the price of the stock. All these components are managed within a Kubernetes cluster.
-
-The model will initially be trained using historical stock data, and then it will be retrained every time new data is received.
+The application is composed of the following: a data extractor, a processor and the Kafka cluster. The data extractor (stock-data-fetcher) fetches the current stock data and sends it to Kafka which acts as a message broker. Then, the processor (stock-data-processor) receives the data and prints the information it received onto standard output. All these components are managed within a Kubernetes cluster.
 
 # Installation Requirements
 
